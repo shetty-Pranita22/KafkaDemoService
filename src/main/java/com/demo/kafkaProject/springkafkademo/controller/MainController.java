@@ -3,15 +3,12 @@ package com.demo.kafkaProject.springkafkademo.controller;
 import com.demo.kafkaProject.springkafkademo.model.Tweet;
 import com.demo.kafkaProject.springkafkademo.repository.TweetsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 @RestController
@@ -38,39 +35,50 @@ public class MainController {
         List<String> hashtags = new ArrayList<>();
         String html = "";
         for (Tweet t : tweets) {
+            html += t + "<br>";
+        }
 
-            for (String mention: t.getMentions().split(",")) {
+
+        tweets.forEach(tweet -> {
+            Arrays.stream(tweet.getMentions().split(",")).forEach(mention -> {
                 mentions.add(mention);
-            }
-            for (String hashtag: t.getHashtags().split(",")) {
+            });
+            Arrays.stream(tweet.getHashtags().split(",")).forEach(hashtag -> {
                 hashtags.add(hashtag);
-            }
+            });
+        });
+        Map<String,Long > mmO1 =
+                mentions.stream().filter(mention -> !mention.equals("")).collect(Collectors.groupingBy(w -> w,  Collectors.counting())).entrySet().stream()
+                        .sorted((Map.Entry.<String, Long>comparingByValue().reversed()))
+                        .limit(3)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        Map<String,Long > hhO1 =
+                hashtags.stream().filter(hashtag -> !hashtag.equals("")).collect(Collectors.groupingBy(w -> w, Collectors.counting())).entrySet().stream()
+                        .sorted((Map.Entry.<String, Long>comparingByValue().reversed()))
+                        .limit(3)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        System.out.println(mmO1);
+        System.out.println(hhO1);
 
-            html += t.getMentions() + "<br>";
-        }
 
-        Map<String,Long > mentionOccurence =
-                mentions.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
-        Map<String,Long > hashtagOccurence =
-                hashtags.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
-        if(mentionOccurence.containsKey("")){
-            mentionOccurence.remove("");
-        }
-        if(hashtagOccurence.containsKey("")){
-            hashtagOccurence.remove("");
-        }
-
-
-        for (Map.Entry<String, Long> entry : mentionOccurence.entrySet()) {
-            if (entry.getValue()==(Collections.max(mentionOccurence.values()))) {
-                System.out.println(entry.getKey()+ " "+ entry.getValue());
-            }
-        }
-        for (Map.Entry<String, Long> entry : hashtagOccurence.entrySet()) {
-            if (entry.getValue()==(Collections.max(hashtagOccurence.values()))) {
-                System.out.println(entry.getKey()+" "+entry.getValue());
-            }
-        }
+//        Map<String,Long > mmO =
+//                mentions.stream().filter(mention -> !mention.equals("")).collect(Collectors.groupingBy(w -> w, TreeMap::new, Collectors.counting()));
+//        Map<String,Long > hhO =
+//                hashtags.stream().filter(hashtag -> !hashtag.equals("")).collect(Collectors.groupingBy(w -> w, TreeMap::new, Collectors.counting()));
+//
+//
+//
+//
+//        mmO.forEach((k,v)->{
+//            if (v==(Collections.max(mmO.values()))) {
+//                System.out.println(k+ " "+ v );
+//            }
+//        });
+//        hhO.forEach((k,v)->{
+//            if (v==(Collections.max(hhO.values()))) {
+//                System.out.println(k+ " "+ v );
+//            }
+//        });
 
         return html;
     }
